@@ -9,7 +9,7 @@ variable "s3_key" {
 }
 
 variable "cognito_user_pool_arn" {
-  type = string
+  type        = string
   description = "ARN do Cognito"
 }
 
