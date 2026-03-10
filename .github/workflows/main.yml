@@ -1,0 +1,110 @@
+name: Video Worker | CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY_NAME: fiapx-worker
+  ECS_CLUSTER_NAME: fiapx-project-cluster
+  ECS_SERVICE_NAME: video-worker-service
+  ECS_TASK_FAMILY: video-worker-task
+  ECS_CONTAINER_NAME: video-worker
+
+jobs:
+  quality_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt # Se usarem outro gerenciador, me avise!
+
+          # Se tiverem um arquivo separado de requisitos de teste (opcional):
+          # pip install -r requirements-test.txt
+
+      - name: Rodar testes unitários
+        # Supondo que vocês usem pytest. Ajuste se for unittest.
+        run: pytest
+        env:
+          # Coloque aqui as variáveis de ambiente fakes que os testes do worker precisarem
+          AWS_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: fake
+          AWS_SECRET_ACCESS_KEY: fake
+          # ... outras variáveis ...
+
+  build_and_deploy:
+    needs: quality_check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar as credenciais da AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Fazer login no Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Construir e enviar a imagem Docker para o ECR (Image Index)
+        id: build-image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_NAME }}:latest
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_NAME }}:${{ github.sha }}
+
+      - name: Salvar a URI da imagem para os próximos steps
+        id: generate-image-uri
+        run: |
+          IMAGE_URI_SHA=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY_NAME }}:${{ github.sha }}
+          echo "image_uri=$IMAGE_URI_SHA" >> $GITHUB_OUTPUT
+
+      - name: Baixar a Task Definition atual do ECS
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_TASK_FAMILY }} \
+            --query taskDefinition > task-definition.json
+
+      - name: Injetar nova imagem na Task Definition
+        id: render-task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.ECS_CONTAINER_NAME }}
+          image: ${{ steps.generate-image-uri.outputs.image_uri }}
+
+      - name: Realizar Deploy no Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE_NAME }}
+          cluster: ${{ env.ECS_CLUSTER_NAME }}
+          wait-for-service-stability: true
