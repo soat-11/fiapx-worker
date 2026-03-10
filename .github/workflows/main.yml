@@ -3,14 +3,8 @@ name: Video Worker | CI/CD
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - "**/*.tf"
-      - "modules/**"
   pull_request:
     branches: [main]
-    paths-ignore:
-      - "**/*.tf"
-      - "modules/**"
 
 permissions:
   id-token: write
@@ -25,7 +19,38 @@ env:
   ECS_CONTAINER_NAME: video-worker
 
 jobs:
+  quality_check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt # Se usarem outro gerenciador, me avise!
+
+          # Se tiverem um arquivo separado de requisitos de teste (opcional):
+          # pip install -r requirements-test.txt
+
+      - name: Rodar testes unitários
+        # Supondo que vocês usem pytest. Ajuste se for unittest.
+        run: pytest
+        env:
+          # Coloque aqui as variáveis de ambiente fakes que os testes do worker precisarem
+          AWS_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: fake
+          AWS_SECRET_ACCESS_KEY: fake
+          # ... outras variáveis ...
+
   build_and_deploy:
+    needs: quality_check
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
@@ -46,7 +71,7 @@ jobs:
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Construir e enviar a imagem Docker para o ECR
+      - name: Construir e enviar a imagem Docker para o ECR (Image Index)
         id: build-image
         uses: docker/build-push-action@v5
         with:
