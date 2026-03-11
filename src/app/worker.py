@@ -3,8 +3,8 @@ import json
 import os
 import shutil
 from pathlib import Path
-from .s3_manager import S3Manager
-from .processor import VideoProcessor
+from s3_manager import S3Manager
+from processor import VideoProcessor
 import traceback
 
 class VideoWorker:
