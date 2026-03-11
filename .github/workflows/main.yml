@@ -39,7 +39,7 @@ jobs:
           pip install -r requirements.txt
 
           # Instalando o pytest e o plugin de cobertura
-          pip install pytest pytest-cov
+          pip install pytest pytest-cov moto
 
       - name: Rodar testes e gerar cobertura (XML)
         run: |
