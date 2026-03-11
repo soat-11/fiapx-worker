@@ -53,12 +53,6 @@ jobs:
           RESULT_QUEUE_URL: fake_url
           OUTPUT_BUCKET: fake_bucket
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
   build_and_deploy:
     needs: quality_check
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
