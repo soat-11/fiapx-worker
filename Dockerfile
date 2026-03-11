@@ -14,12 +14,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia os códigos do projeto
-COPY src/app/ .
+COPY src/ ./src/
 
 RUN chmod +x worker.py
-
-# 2. Muda para a subpasta exata onde o script mora
-WORKDIR /app/src/app
 
 # 2. Muda para a subpasta exata onde o script mora
 WORKDIR /app/src/app
