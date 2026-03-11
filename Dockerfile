@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 
 # 2. Muda para a subpasta exata onde o script mora
-WORKDIR /app/src/app
+WORKDIR /app/src
 
 # Variável para ver logs em tempo real no CloudWatch
 ENV PYTHONUNBUFFERED=1
