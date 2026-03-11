@@ -13,8 +13,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia TODO o código do projeto (Isso copia a pasta "src" para dentro do "/app")
-COPY . .
+# Copia os códigos do projeto
+COPY src/app/ .
+
+RUN chmod +x worker.py
 
 # 2. Muda para a subpasta exata onde o script mora
 WORKDIR /app/src/app
