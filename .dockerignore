@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+.pytest_cache/
+.env
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraform.lock.hcl
+
+# Git
+.git/
+.gitignore
+
+# Docker (não precisa de Dockerfile dentro do container)
+Dockerfile
+.dockerignore
+
+# Documentação
+README.md
