@@ -14,10 +14,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia os códigos do projeto
-COPY src/ ./src/
+COPY . .
 
 # 2. Muda para a subpasta exata onde o script mora
-WORKDIR /src/app
+WORKDIR /app/src/app
 
 # Variável para ver logs em tempo real no CloudWatch
 ENV PYTHONUNBUFFERED=1
