@@ -68,12 +68,12 @@ class VideoWorker:
 
             # 2. FFmpeg (Fatiamento)
             self.processor.extract_frames(video_local, str(frames_dir))
-            print(f"[2/4] Fatiamento concluído.")
+            print("[2/4] Fatiamento concluído.")
 
             # 3. Zip
             zip_local = str(work_dir / f"{video_id}.zip")
             self.processor.create_zip(str(frames_dir), zip_local)
-            print(f"[3/4] Zip criado.")
+            print("[3/4] Zip criado.")
 
             output_key = f"zips/{video_id}.zip"
             print(f"[*] Fazendo upload de: {zip_local} para s3://{self.output_bucket}/{output_key}")
