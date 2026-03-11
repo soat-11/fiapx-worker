@@ -6,10 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-permissions:
-  id-token: write
-  contents: read
-
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY_NAME: fiapx-worker
@@ -21,6 +17,9 @@ env:
 jobs:
   quality_check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -57,6 +56,9 @@ jobs:
     needs: quality_check
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
